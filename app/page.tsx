@@ -33,9 +33,9 @@ const PalmIdentification = () => {
   const handleAnswer = (answer: "yes" | "no" | "unsure") => {
     if (!identificationSystem || !currentQuestion) return;
 
-    if (answer === "unsure") {
-      alert("Pertanyaan ini dilewati karena Anda tidak yakin.");
-    }    
+    if (answer !== "unsure") {
+      identificationSystem.answerQuestion(currentQuestion, answer === "yes");
+    }
 
     setAnsweredQuestions(prev => prev + 1);
 
