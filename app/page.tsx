@@ -1,13 +1,43 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { PalmDetailCard } from "@/components/palmdetailcard";
 import { CheckCircle, X, HelpCircle, Palmtree } from "lucide-react";
-import { identificationMap, PalmIdentificationSystem, PalmDetail } from "@/data/palmdata";
+import { identificationMap } from "@/data/palmdata";
 import { ciriQuestions } from "@/data/ciriQuestions";
+
+interface PalmCiri {
+  [key: string]: number;
+}
+
+interface PalmDetail {
+  nama: string;
+  deskripsi: string;
+  asal: string;
+  habitat: {
+    suhu: string;
+    kelembaban: string;
+    cahaya: string;
+    ketinggian: string;
+  };
+  perawatan: {
+    penyiraman: string;
+    pemupukan: string;
+    pemangkasan: string;
+  };
+  ciriKhas: string[];
+  manfaat: string[];
+  srcimage: string;
+}
+
+interface PalmData {
+  ciri: PalmCiri;
+  nama: string;
+  palmDetail: PalmDetail;
+}
 
 interface Result {
   nama: string;
@@ -15,71 +45,93 @@ interface Result {
   palmDetail: PalmDetail;
 }
 
+interface Answers {
+  [key: string]: boolean;
+}
+
 const PalmIdentification = () => {
-  const [identificationSystem, setIdentificationSystem] = useState<PalmIdentificationSystem | null>(null);
-  const [currentQuestion, setCurrentQuestion] = useState<string | null>(null);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [answers, setAnswers] = useState<Answers>({});
   const [results, setResults] = useState<Result[] | null>(null);
   const [isFinished, setIsFinished] = useState(false);
-  const [answeredQuestions, setAnsweredQuestions] = useState(0);
-  const [totalQuestions] = useState(Object.keys(ciriQuestions).length);
+  const [exactMatch, setExactMatch] = useState<PalmData | null>(null);
 
-  useEffect(() => {
-    const system = new PalmIdentificationSystem(identificationMap);
-    setIdentificationSystem(system);
-    const firstQuestion = system.getNextQuestion();
-    setCurrentQuestion(firstQuestion);
-  }, []);
+  const questionKeys = Object.keys(ciriQuestions);
+
+  const checkExactMatch = (answers: Answers): PalmData | null => {
+    for (const [, palm] of Object.entries(identificationMap)) {
+      const palmCiriKeys = Object.keys(palm.ciri);
+      const allCiriMatched = palmCiriKeys.every(
+        (ciriKey) => answers[ciriKey] === true
+      );
+
+      if (allCiriMatched) {
+        return palm;
+      }
+    }
+    return null;
+  };
+
+const calculateResults = (currentAnswers: Answers): Result[] => {
+  const scores: { [key: string]: Result } = {};
+
+  Object.entries(identificationMap).forEach(([palmKey, palm]) => {
+    let score = 0;
+    let totalWeight = 0;
+
+    Object.entries(palm.ciri).forEach(([ciriKey, weight]) => {
+      // Abaikan pertanyaan yang tidak dijawab (key tidak ada di answers)
+      if (currentAnswers[ciriKey] === undefined) return;
+      
+      if (currentAnswers[ciriKey]) {
+        score += weight;
+      }
+      totalWeight += weight;
+    });
+
+    scores[palmKey] = {
+      nama: palm.nama,
+      percentage: (score / totalWeight) * 100,
+      palmDetail: palm.palmDetail,
+    };
+  });
+
+  return Object.values(scores)
+    .filter((result) => result.percentage > 0)
+    .sort((a, b) => b.percentage - a.percentage);
+};
 
   const handleAnswer = (answer: "yes" | "no" | "unsure") => {
-    if (!identificationSystem || !currentQuestion) return;
-
-    if (answer !== "unsure") {
-      identificationSystem.answerQuestion(currentQuestion, answer === "yes");
-    }
-
-    setAnsweredQuestions(prev => prev + 1);
-
-    if (identificationSystem.isIdentificationComplete()) {
-      const identifiedPalm = identificationSystem.getIdentifiedPalm();
-      if (identifiedPalm && identifiedPalm in identificationMap) {
-        const palmData = identificationMap[identifiedPalm as keyof typeof identificationMap];
-        setResults([{
-          nama: palmData.nama,
-          percentage: 100,
-          palmDetail: palmData.palmDetail
-        }]);
-      } else {
-        const candidates = identificationSystem.getCurrentCandidates();
-        const resultsList = candidates
-          .filter(palmName => palmName in identificationMap)
-          .map(palmName => {
-            const palmData = identificationMap[palmName as keyof typeof identificationMap];
-            return {
-              nama: palmData.nama,
-              percentage: identificationSystem.getMatchPercentage(palmName),
-              palmDetail: palmData.palmDetail
-            };
-          })
-          .sort((a, b) => b.percentage - a.percentage);
-
-        setResults(resultsList);
-      }
+    const currentKey = questionKeys[currentQuestionIndex];
+    
+    // Jika jawaban adalah "Tidak Yakin", jangan ubah answers
+    const newAnswers = answer === "unsure" 
+      ? { ...answers } 
+      : { ...answers, [currentKey]: answer === "yes" };
+      
+    setAnswers(newAnswers);
+  
+    const match = checkExactMatch(newAnswers);
+    if (match) {
+      setExactMatch(match);
       setIsFinished(true);
       return;
     }
-
-    const nextQuestion = identificationSystem.getNextQuestion();
-    setCurrentQuestion(nextQuestion);
-
-    if (!nextQuestion) {
+  
+    if (currentQuestionIndex >= questionKeys.length - 1) {
+      const calculatedResults = calculateResults(newAnswers);
+      setResults(calculatedResults.length > 0 ? calculatedResults : null);
       setIsFinished(true);
+    } else {
+      setCurrentQuestionIndex((prev) => prev + 1);
     }
   };
+  
 
-  const progress = (answeredQuestions / totalQuestions) * 100;
+  const progress = (currentQuestionIndex / questionKeys.length) * 100;
 
   return (
-    <div className="flex items-center justify-center bg-green-50 min-h-screen">
+    <div className="flex items-center justify-center bg-green-50 min-h-screen ">
       <Card className="w-full max-w-2xl mx-auto bg-[#FBF6E9]">
         <CardHeader>
           <Palmtree size={48} className="mr-4 text-green-700" />
@@ -88,10 +140,10 @@ const PalmIdentification = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {!isFinished && currentQuestion ? (
+          {!isFinished ? (
             <div className="space-y-6">
               <div className="text-lg font-medium text-center">
-                {ciriQuestions[currentQuestion]}
+                {ciriQuestions[questionKeys[currentQuestionIndex]]}
               </div>
 
               <div className="flex justify-center gap-4">
@@ -112,7 +164,7 @@ const PalmIdentification = () => {
                 </Button>
                 <Button
                   onClick={() => handleAnswer("unsure")}
-                  variant="outline"
+                  variant="secondary"
                   className="flex items-center gap-2"
                 >
                   <HelpCircle className="w-4 h-4" />
@@ -120,11 +172,13 @@ const PalmIdentification = () => {
                 </Button>
               </div>
             </div>
-          ) : results && results.length > 0 ? (
+          ) : exactMatch ? (
             <div className="space-y-6">
-              <h3 className="text-lg font-semibold">
-                {results[0].percentage === 100 ? "Hasil Identifikasi:" : "Kemungkinan Jenis Palem:"}
-              </h3>
+              <PalmDetailCard detail={exactMatch.palmDetail} />
+            </div>
+          ) : results ? (
+            <div className="space-y-6">
+              <h3 className="text-lg font-semibold">Kemungkinan Jenis Palem:</h3>
               {results.map((result, index) => (
                 <div key={index} className="space-y-4">
                   <div className="flex justify-between">
@@ -138,7 +192,7 @@ const PalmIdentification = () => {
             </div>
           ) : (
             <div className="text-center text-red-500 text-lg font-semibold">
-              Tidak ada Ciri-Ciri yang Cocok Dari Ke-10 Jenis Tanaman Palem
+              Tidak ada Ciri-Ciri yang Cocok
             </div>
           )}
 

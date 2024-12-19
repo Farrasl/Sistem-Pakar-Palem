@@ -22,6 +22,16 @@ export interface PalmDetail {
   srcimage: string;
 }
 
+export interface PalmData {
+  ciri: PalmCiri;
+  nama: string;
+  palmDetail: PalmDetail;
+}
+
+export interface IdentificationMap {
+  [key: string]: PalmData;
+}
+
 export interface Result {
   nama: string;
   percentage: number;
@@ -32,157 +42,16 @@ export interface Answers {
   [key: string]: boolean;
 }
 
-export interface PalmData {
-  ciri: string[];
-  nama: string;
-  urutan_ciri: string[];
-}
-
-export interface IdentificationMap {
-  [key: string]: PalmData;
-}
-
-export class PalmIdentificationSystem {
-  private identificationMap: IdentificationMap;
-  private askedQuestions: Set<string>;
-  private currentCandidates: Set<string>;
-  private questionFrequency: Map<string, number>;
-  private answers: Map<string, boolean>;
-
-  constructor(identificationMap: IdentificationMap) {
-    this.identificationMap = identificationMap;
-    this.askedQuestions = new Set();
-    this.currentCandidates = new Set(Object.keys(identificationMap));
-    this.questionFrequency = this.calculateQuestionFrequency();
-    this.answers = new Map();
-  }
-
-  private calculateQuestionFrequency(): Map<string, number> {
-    const frequency = new Map<string, number>();
-    
-    // Count how many times each characteristic appears across all palms
-    Object.values(this.identificationMap).forEach(palm => {
-      palm.ciri.forEach(ciri => {
-        frequency.set(ciri, (frequency.get(ciri) || 0) + 1);
-      });
-    });
-    
-    return frequency;
-  }
-
-  private getNextBestQuestion(): string | null {
-    if (this.currentCandidates.size === 0) return null;
-
-    const remainingQuestions = new Set<string>();
-    
-    // Collect all remaining relevant questions
-    this.currentCandidates.forEach(palmName => {
-      const palm = this.identificationMap[palmName];
-      palm.ciri.forEach(ciri => {
-        if (!this.askedQuestions.has(ciri)) {
-          remainingQuestions.add(ciri);
-        }
-      });
-    });
-
-    if (remainingQuestions.size === 0) return null;
-
-    // Find the question that appears most frequently among remaining candidates
-    let bestQuestion = null;
-    let maxScore = -1;
-
-    remainingQuestions.forEach(question => {
-      const frequency = this.questionFrequency.get(question) || 0;
-      const score = frequency * this.getQuestionImpact(question);
-      
-      if (score > maxScore) {
-        maxScore = score;
-        bestQuestion = question;
-      }
-    });
-
-    return bestQuestion;
-  }
-
-  private getQuestionImpact(question: string): number {
-    let positiveCount = 0;
-    let totalCount = 0;
-    
-    this.currentCandidates.forEach(palmName => {
-      const palm = this.identificationMap[palmName];
-      if (palm.ciri.includes(question)) {
-        positiveCount++;
-      }
-      totalCount++;
-    });
-
-    // Return a score that favors questions that split candidates more evenly
-    return Math.abs(0.5 - (positiveCount / totalCount));
-  }
-
-  public answerQuestion(question: string, answer: boolean): void {
-    this.askedQuestions.add(question);
-    this.answers.set(question, answer);
-    
-    // Update candidates based on the answer
-    const newCandidates = new Set<string>();
-    
-    this.currentCandidates.forEach(palmName => {
-      const palm = this.identificationMap[palmName];
-      const hasCiri = palm.ciri.includes(question);
-      
-      if ((answer && hasCiri) || (!answer && !hasCiri)) {
-        newCandidates.add(palmName);
-      }
-    });
-    
-    this.currentCandidates = newCandidates;
-  }
-
-  public getMatchPercentage(palmName: string): number {
-    const palm = this.identificationMap[palmName];
-    if (!palm) return 0;
-
-    let matchedCriteria = 0;
-    let totalCriteria = 0;
-
-    palm.ciri.forEach(ciri => {
-      if (this.askedQuestions.has(ciri)) {
-        totalCriteria++;
-        const answer = this.answers.get(ciri);
-        if (answer === true) {
-          matchedCriteria++;
-        }
-      }
-    });
-
-    return totalCriteria > 0 ? (matchedCriteria / totalCriteria) * 100 : 0;
-  }
-
-  public getNextQuestion(): string | null {
-    return this.getNextBestQuestion();
-  }
-
-  public getCurrentCandidates(): string[] {
-    return Array.from(this.currentCandidates);
-  }
-
-  public isIdentificationComplete(): boolean {
-    return this.currentCandidates.size <= 1;
-  }
-
-  public getIdentifiedPalm(): string | null {
-    if (this.currentCandidates.size === 1) {
-      return Array.from(this.currentCandidates)[0];
-    }
-    return null;
-  }
-}
-
 export const identificationMap = {
   P1: {
-    ciri: ["B1", "B2", "B3", "B4", "B5", "B6"],
-    urutan_ciri: ["B1", "B2", "B3", "B4", "B5", "B6"],
+    ciri: {
+      B1: 1,
+      B2: 1,
+      B3: 1,
+      B4: 0.9,
+      B5: 0.8,
+      B6: 0.7,
+    },
     nama: "Palem Raja (Roystonea regia)",
     palmDetail: {
       nama: "Palem Raja (Roystonea regia)",
@@ -219,8 +88,14 @@ export const identificationMap = {
     },
   },
   P2: {
-    ciri: ["B1", "B2", "B7", "B8", "B9", "B10"],
-    urutan_ciri: ["B1", "B2", "B7", "B8", "B9", "B10"],
+    ciri: {
+      B1: 1,
+      B2: 1,
+      B7: 1,
+      B8: 0.9,
+      B9: 0.8,
+      B10: 0.7,
+    },
     nama: "Palem Kelapa (Cocos nucifera)",
     palmDetail: {
       nama: "Palem Kelapa (Cocos nucifera)",
@@ -256,8 +131,14 @@ export const identificationMap = {
     },
   },
   P3: {
-    ciri: ["B11", "B12", "B13", "B14", "B15", "B16"],
-    urutan_ciri: ["B11", "B12", "B13", "B14", "B15", "B16"],
+    ciri: {
+      B11: 1,
+      B12: 1,
+      B13: 1,
+      B14: 0.9,
+      B15: 0.8,
+      B16: 0.7,
+    },
     nama: "Palem Merah (Cyrtostachys renda)",
     palmDetail: {
       nama: "Palem Merah (Cyrtostachys renda)",
@@ -293,8 +174,14 @@ export const identificationMap = {
     },
   },
   P4: {
-    ciri: ["B1", "B17", "B18", "B19", "B20", "B21"],
-    urutan_ciri: ["B1", "B17", "B18", "B19", "B20", "B21"],
+    ciri: {
+      B1: 1,
+      B17: 1,
+      B18: 1,
+      B19: 0.9,
+      B20: 0.8,
+      B21: 0.7,
+    },
     nama: "Palem Kipas (Livistona chinensis)",
     palmDetail: {
       nama: "Palem Kipas (Livistona chinensis)",
@@ -330,8 +217,14 @@ export const identificationMap = {
     },
   },
   P5: {
-    ciri: ["B1", "B22", "B23", "B24", "B25", "B26"],
-    urutan_ciri: ["B1", "B22", "B23", "B24", "B25", "B26"],
+    ciri: {
+      B1: 1,
+      B22: 1,
+      B23: 1,
+      B24: 0.9,
+      B25: 0.8,
+      B26: 0.7,
+    },
     nama: "Palem Ekor Tupai (Wodyetia bifurcata)",
     palmDetail: {
       nama: "Palem Ekor Tupai (Wodyetia bifurcata)",
@@ -367,8 +260,14 @@ export const identificationMap = {
     },
   },
   P6: {
-    ciri: ["B27", "B28", "B29", "B30", "B31", "B32"],
-    urutan_ciri: ["B27", "B28", "B29", "B30", "B31", "B32"],
+    ciri: {
+      B27: 1,
+      B28: 1,
+      B29: 1,
+      B30: 0.9,
+      B31: 0.8,
+      B32: 0.7,
+    },
     nama: "Palem Putri (Veitchia merillii)",
     palmDetail: {
       nama: "Palem Putri (Veitchia merillii)",
@@ -404,8 +303,14 @@ export const identificationMap = {
     },
   },
   P7: {
-    ciri: ["B11", "B33", "B34", "B35", "B36", "B37"],
-    urutan_ciri: ["B11", "B33", "B34", "B35", "B36", "B37"],
+    ciri: {
+      B11: 1,
+      B33: 1,
+      B34: 1,
+      B35: 0.9,
+      B36: 0.8,
+      B37: 0.7,
+    },
     nama: "Palem Kuning (Chrysalidocarpus lutescens)",
     palmDetail: {
       nama: "Palem Kuning (Chrysalidocarpus lutescens)",
@@ -441,8 +346,14 @@ export const identificationMap = {
     },
   },
   P8: {
-    ciri: ["B1", "B38", "B39", "B40", "B41", "B42"],
-    urutan_ciri: ["B1", "B38", "B39", "B40", "B41", "B42"],
+    ciri: {
+      B1: 1,
+      B38: 1,
+      B39: 1,
+      B40: 0.9,
+      B41: 0.8,
+      B42: 0.7,
+    },
     nama: "Palem Botol (Hyophorbe lagenicaulis)",
     palmDetail: {
       nama: "Palem Botol (Hyophorbe lagenicaulis)",
@@ -478,8 +389,14 @@ export const identificationMap = {
     },
   },
   P9: {
-    ciri: ["B11", "B43", "B44", "B45", "B46", "B47"],
-    urutan_ciri: ["B11", "B43", "B44", "B45", "B46", "B47"],
+    ciri: {
+      B11: 1,
+      B43: 1,
+      B44: 1,
+      B45: 0.9,
+      B46: 0.8,
+      B47: 0.7,
+    },
     nama: "Palem Jepang (Ptychosperma macarthurii)",
     palmDetail: {
       nama: "Palem Jepang (Ptychosperma macarthurii)",
@@ -516,8 +433,14 @@ export const identificationMap = {
   },
 
   P10: {
-    ciri: ["B11", "B48", "B49", "B50", "B51", "B52"],
-    urutan_ciri: ["B11", "B48", "B49", "B50", "B51", "B52"],
+    ciri: {
+      B11: 1,
+      B48: 1,
+      B49: 1,
+      B50: 0.9,
+      B51: 0.8,
+      B52: 0.7,
+    },
     nama: "Palem Waregu (Rhapis excelsa)",
     palmDetail: {
       nama: "Palem Waregu (Rhapis excelsa)",
