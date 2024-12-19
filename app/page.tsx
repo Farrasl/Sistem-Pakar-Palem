@@ -138,7 +138,7 @@ const PalmIdentification = () => {
             </div>
           ) : (
             <div className="text-center text-red-500 text-lg font-semibold">
-              Tidak ada Ciri-Ciri yang Cocok
+              Tidak ada Ciri-Ciri yang Cocok Dari Ke-10 Jenis Tanaman Palem
             </div>
           )}
 
