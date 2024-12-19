@@ -1,101 +1,205 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+import React, { useState } from "react";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { PalmDetailCard } from "@/components/palmdetailcard";
+import { CheckCircle, X, HelpCircle } from "lucide-react";
+import { identificationMap } from "@/data/palmdata";
+import { ciriQuestions } from "@/data/ciriQuestions";
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
+ interface PalmCiri {
+  [key: string]: number;
 }
+
+ interface PalmDetail {
+  nama: string;
+  deskripsi: string;
+  asal: string;
+  habitat: {
+    suhu: string;
+    kelembaban: string;
+    cahaya: string;
+    ketinggian: string;
+  };
+  perawatan: {
+    penyiraman: string;
+    pemupukan: string;
+    pemangkasan: string;
+  };
+  ciriKhas: string[];
+  manfaat: string[];
+  imageUrl: string;
+}
+
+ interface PalmData {
+  ciri: PalmCiri;
+  nama: string;
+  palmDetail: PalmDetail;
+}
+
+ interface IdentificationMap {
+  [key: string]: PalmData;
+}
+
+ interface Result {
+  nama: string;
+  percentage: number;
+  palmDetail: PalmDetail;
+}
+
+ interface Answers {
+  [key: string]: boolean;
+}
+
+const PalmIdentification = () => {
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [answers, setAnswers] = useState<Answers>({});
+  const [results, setResults] = useState<Result[] | null>(null);
+  const [isFinished, setIsFinished] = useState(false);
+  const [exactMatch, setExactMatch] = useState<PalmData | null>(null);
+
+  const questionKeys = Object.keys(ciriQuestions);
+
+  const checkExactMatch = (answers: Answers): PalmData | null => {
+    for (const [palmKey, palm] of Object.entries(identificationMap)) {
+      const palmCiriKeys = Object.keys(palm.ciri);
+      const allCiriMatched = palmCiriKeys.every(ciriKey => answers[ciriKey] === true);
+      
+      if (allCiriMatched) {
+        return palm;
+      }
+    }
+    return null;
+  };
+
+  const calculateResults = (): Result[] => {
+    const scores: { [key: string]: Result } = {};
+
+    Object.entries(identificationMap).forEach(([palmKey, palm]) => {
+      let score = 0;
+      let totalWeight = 0;
+
+      Object.entries(palm.ciri).forEach(([ciriKey, weight]) => {
+        if (answers[ciriKey] === true) {
+          score += weight;
+        }
+        totalWeight += weight;
+      });
+
+      scores[palmKey] = {
+        nama: palm.nama,
+        percentage: (score / totalWeight) * 100,
+        palmDetail: palm.palmDetail
+      };
+    });
+
+    return Object.values(scores)
+      .sort((a, b) => b.percentage - a.percentage)
+      .slice(0, 3);
+  };
+
+  const handleAnswer = (answer: "yes" | "no" | "unsure") => {
+    const currentKey = questionKeys[currentQuestionIndex];
+    const newAnswers = {
+      ...answers,
+      [currentKey]: answer === "yes",
+    };
+    setAnswers(newAnswers);
+
+    const match = checkExactMatch(newAnswers);
+    if (match) {
+      setExactMatch(match);
+      setIsFinished(true);
+      return;
+    }
+
+    if (currentQuestionIndex >= questionKeys.length - 1) {
+      const calculatedResults = calculateResults();
+      setResults(calculatedResults);
+      setIsFinished(true);
+    } else {
+      setCurrentQuestionIndex((prev) => prev + 1);
+    }
+  };
+
+  const progress = (currentQuestionIndex / questionKeys.length) * 100;
+
+  return (
+    <Card className="w-full max-w-2xl mx-auto">
+      <CardHeader>
+        <CardTitle className="text-2xl font-bold text-center">
+          Sistem Identifikasi Palem
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {!isFinished ? (
+          <div className="space-y-6">
+            <div className="text-lg font-medium text-center">
+              {ciriQuestions[questionKeys[currentQuestionIndex]]}
+            </div>
+
+            <div className="flex justify-center gap-4">
+              <Button
+                onClick={() => handleAnswer("yes")}
+                className="flex items-center gap-2"
+              >
+                <CheckCircle className="w-4 h-4" />
+                Ya
+              </Button>
+              <Button
+                onClick={() => handleAnswer("no")}
+                variant="destructive"
+                className="flex items-center gap-2"
+              >
+                <X className="w-4 h-4" />
+                Tidak
+              </Button>
+              <Button
+                onClick={() => handleAnswer("unsure")}
+                variant="secondary"
+                className="flex items-center gap-2"
+              >
+                <HelpCircle className="w-4 h-4" />
+                Tidak Yakin
+              </Button>
+            </div>
+          </div>
+        ) : exactMatch ? (
+          <div className="space-y-6">
+            <PalmDetailCard detail={exactMatch.palmDetail} />
+          </div>
+        ) : (
+          <div className="space-y-6">
+            <h3 className="text-lg font-semibold">Kemungkinan Jenis Palem:</h3>
+            {results &&
+              results.map((result, index) => (
+                <div key={index} className="space-y-4">
+                  <div className="flex justify-between">
+                    <span>{result.nama}</span>
+                    <span>{result.percentage.toFixed(1)}%</span>
+                  </div>
+                  <Progress value={result.percentage} />
+                  {result.percentage > 80 && (
+                    <PalmDetailCard detail={result.palmDetail} />
+                  )}
+                </div>
+              ))}
+          </div>
+        )}
+
+        {!isFinished && (
+          <div className="mt-8 space-y-2">
+            <Progress value={progress} />
+            <div className="text-center text-sm text-gray-500">
+              Progress: {Math.round(progress)}%
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
+export default PalmIdentification;
