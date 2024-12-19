@@ -1,5 +1,5 @@
-import React from 'react';
-import Image from 'next/image';
+import React from "react";
+import Image from "next/image";
 import {
   Card,
   CardContent,
@@ -53,8 +53,8 @@ export const PalmDetailCard: React.FC<PalmDetailCardProps> = ({ detail }) => {
             <Image
               src={detail.srcimage}
               alt={detail.nama}
-              layout="fill"
-              objectFit="cover"
+              width={128} // Set width
+              height={128} // Set height
               className="rounded-lg"
             />
           </div>
@@ -92,7 +92,9 @@ export const PalmDetailCard: React.FC<PalmDetailCardProps> = ({ detail }) => {
                 <Droplets className="w-4 h-4 text-blue-500" />
                 <span className="text-sm">Kelembaban:</span>
               </div>
-              <p className="text-gray-600 text-sm">{detail.habitat.kelembaban}</p>
+              <p className="text-gray-600 text-sm">
+                {detail.habitat.kelembaban}
+              </p>
             </div>
           </div>
           <div className="mt-4 grid grid-cols-2 gap-4">
@@ -102,7 +104,9 @@ export const PalmDetailCard: React.FC<PalmDetailCardProps> = ({ detail }) => {
             </div>
             <div>
               <span className="text-sm font-medium">Ketinggian:</span>
-              <p className="text-gray-600 text-sm">{detail.habitat.ketinggian}</p>
+              <p className="text-gray-600 text-sm">
+                {detail.habitat.ketinggian}
+              </p>
             </div>
           </div>
         </div>
@@ -130,15 +134,21 @@ export const PalmDetailCard: React.FC<PalmDetailCardProps> = ({ detail }) => {
           <div className="mt-2 space-y-4">
             <div>
               <h4 className="font-medium">Penyiraman</h4>
-              <p className="text-gray-600 text-sm">{detail.perawatan.penyiraman}</p>
+              <p className="text-gray-600 text-sm">
+                {detail.perawatan.penyiraman}
+              </p>
             </div>
             <div>
               <h4 className="font-medium">Pemupukan</h4>
-              <p className="text-gray-600 text-sm">{detail.perawatan.pemupukan}</p>
+              <p className="text-gray-600 text-sm">
+                {detail.perawatan.pemupukan}
+              </p>
             </div>
             <div>
               <h4 className="font-medium">Pemangkasan</h4>
-              <p className="text-gray-600 text-sm">{detail.perawatan.pemangkasan}</p>
+              <p className="text-gray-600 text-sm">
+                {detail.perawatan.pemangkasan}
+              </p>
             </div>
           </div>
         </div>
@@ -156,6 +166,16 @@ export const PalmDetailCard: React.FC<PalmDetailCardProps> = ({ detail }) => {
               </li>
             ))}
           </ul>
+        </div>
+
+        {/* Button Mulai Ulang */}
+        <div className="flex justify-center mt-8">
+          <button
+            onClick={() => window.location.reload()} // Aksi untuk memulai ulang
+            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
+          >
+            Mulai Ulang
+          </button>
         </div>
       </CardContent>
     </Card>
