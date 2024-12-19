@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 import {
   Card,
   CardContent,
@@ -27,7 +28,7 @@ interface PalmDetail {
   };
   ciriKhas: string[];
   manfaat: string[];
-  imageUrl: string;
+  srcimage: string;
 }
 
 interface PalmDetailCardProps {
@@ -48,11 +49,15 @@ export const PalmDetailCard: React.FC<PalmDetailCardProps> = ({ detail }) => {
               </Badge>
             </CardDescription>
           </div>
-          <img
-            src={detail.imageUrl}
-            alt={detail.nama}
-            className="w-32 h-32 rounded-lg object-cover"
-          />
+          <div className="relative w-32 h-32">
+            <Image
+              src={detail.srcimage}
+              alt={detail.nama}
+              layout="fill"
+              objectFit="cover"
+              className="rounded-lg"
+            />
+          </div>
         </div>
       </CardHeader>
 

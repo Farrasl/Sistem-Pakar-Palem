@@ -19,7 +19,7 @@ export interface PalmDetail {
   };
   ciriKhas: string[];
   manfaat: string[];
-  imageUrl: string;
+  srcimage: string;
 }
 
 export interface PalmData {
@@ -84,7 +84,7 @@ export const identificationMap = {
         "Memperbaiki kualitas udara",
         "Nilai estetika tinggi untuk area publik",
       ],
-      imageUrl: "/api/placeholder/400/300",
+      srcimage: "/images/PalemRaja.png",
     },
   },
   P2: {
@@ -127,7 +127,7 @@ export const identificationMap = {
         "Tanaman produktif",
         "Penahan erosi pantai",
       ],
-      imageUrl: "/api/placeholder/400/300",
+      srcimage: "/api/placeholder/400/300",
     },
   },
   P3: {
@@ -170,7 +170,7 @@ export const identificationMap = {
         "Penambah nilai estetika",
         "Pembatas area taman",
       ],
-      imageUrl: "/api/placeholder/400/300",
+      srcimage: "/api/placeholder/400/300",
     },
   },
   P4: {
@@ -213,7 +213,7 @@ export const identificationMap = {
         "Pembatas kawasan",
         "Nilai estetika tinggi",
       ],
-      imageUrl: "/api/placeholder/400/300",
+      srcimage: "/api/placeholder/400/300",
     },
   },
   P5: {
@@ -256,7 +256,7 @@ export const identificationMap = {
         "Focal point taman",
         "Estetika landscape",
       ],
-      imageUrl: "/api/placeholder/400/300",
+      srcimage: "/api/placeholder/400/300",
     },
   },
   P6: {
@@ -299,7 +299,7 @@ export const identificationMap = {
         "Pembatas area",
         "Estetika landscape mini",
       ],
-      imageUrl: "/api/placeholder/400/300",
+      srcimage: "/api/placeholder/400/300",
     },
   },
   P7: {
@@ -342,7 +342,7 @@ export const identificationMap = {
         "Pembatas alami",
         "Penyejuk ruangan",
       ],
-      imageUrl: "/api/placeholder/400/300",
+      srcimage: "/api/placeholder/400/300",
     },
   },
   P8: {
@@ -385,7 +385,7 @@ export const identificationMap = {
         "Nilai estetika tinggi",
         "Penghias area kecil",
       ],
-      imageUrl: "/api/placeholder/400/300",
+      srcimage: "/api/placeholder/400/300",
     },
   },
   P9: {
@@ -428,7 +428,7 @@ export const identificationMap = {
         "Tanaman pembatas yang alami",
         "Penghijauan area rumah",
       ],
-      imageUrl: "/api/placeholder/400/300",
+      srcimage: "/api/placeholder/400/300",
     },
   },
 
@@ -473,7 +473,7 @@ export const identificationMap = {
         "Tanaman pengisi sudut ruangan",
         "Penghijauan ruangan kecil",
       ],
-      imageUrl: "/api/placeholder/400/300",
+      srcimage: "/api/placeholder/400/300",
     },
   },
 };

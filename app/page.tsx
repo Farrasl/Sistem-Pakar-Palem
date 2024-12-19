@@ -30,17 +30,13 @@ import { ciriQuestions } from "@/data/ciriQuestions";
   };
   ciriKhas: string[];
   manfaat: string[];
-  imageUrl: string;
+  srcimage: string;
 }
 
  interface PalmData {
   ciri: PalmCiri;
   nama: string;
   palmDetail: PalmDetail;
-}
-
- interface IdentificationMap {
-  [key: string]: PalmData;
 }
 
  interface Result {
@@ -63,7 +59,7 @@ const PalmIdentification = () => {
   const questionKeys = Object.keys(ciriQuestions);
 
   const checkExactMatch = (answers: Answers): PalmData | null => {
-    for (const [palmKey, palm] of Object.entries(identificationMap)) {
+    for (const [, palm] of Object.entries(identificationMap)) {
       const palmCiriKeys = Object.keys(palm.ciri);
       const allCiriMatched = palmCiriKeys.every(ciriKey => answers[ciriKey] === true);
       
