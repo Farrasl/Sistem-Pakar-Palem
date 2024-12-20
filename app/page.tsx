@@ -6,57 +6,20 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { PalmDetailCard } from "@/components/palmdetailcard";
 import { CheckCircle, X, HelpCircle, Palmtree } from "lucide-react";
-import { identificationMap } from "@/data/palmdata";
+import { identificationMap, PalmData, Result } from "@/data/palmdata";
 import { ciriQuestions } from "@/data/ciriQuestions";
-
-interface PalmCiri {
-  [key: string]: number;
-}
-
-interface PalmDetail {
-  nama: string;
-  deskripsi: string;
-  asal: string;
-  habitat: {
-    suhu: string;
-    kelembaban: string;
-    cahaya: string;
-    ketinggian: string;
-  };
-  perawatan: {
-    penyiraman: string;
-    pemupukan: string;
-    pemangkasan: string;
-  };
-  ciriKhas: string[];
-  manfaat: string[];
-  srcimage: string;
-}
-
-interface PalmData {
-  ciri: PalmCiri;
-  nama: string;
-  palmDetail: PalmDetail;
-}
-
-interface Result {
-  nama: string;
-  percentage: number;
-  palmDetail: PalmDetail;
-}
+import { getNextQuestion } from "@/lib/palmidentificationlogic";
 
 interface Answers {
   [key: string]: boolean;
 }
 
 const PalmIdentification = () => {
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [currentQuestionKey, setCurrentQuestionKey] = useState("B1"); // Start with B1
   const [answers, setAnswers] = useState<Answers>({});
-  const [results, setResults] = useState<Result[] | null>(null);
   const [isFinished, setIsFinished] = useState(false);
+  const [results, setResults] = useState<Result[] | null>(null);
   const [exactMatch, setExactMatch] = useState<PalmData | null>(null);
-
-  const questionKeys = Object.keys(ciriQuestions);
 
   const checkExactMatch = (answers: Answers): PalmData | null => {
     for (const [, palm] of Object.entries(identificationMap)) {
@@ -72,66 +35,66 @@ const PalmIdentification = () => {
     return null;
   };
 
-const calculateResults = (currentAnswers: Answers): Result[] => {
-  const scores: { [key: string]: Result } = {};
-
-  Object.entries(identificationMap).forEach(([palmKey, palm]) => {
-    let score = 0;
-    let totalWeight = 0;
-
-    Object.entries(palm.ciri).forEach(([ciriKey, weight]) => {
-      // Abaikan pertanyaan yang tidak dijawab (key tidak ada di answers)
-      if (currentAnswers[ciriKey] === undefined) return;
-      
-      if (currentAnswers[ciriKey]) {
-        score += weight;
+  const calculateResults = (currentAnswers: Answers): Result[] => {
+    const scores: { [key: string]: Result } = {};
+  
+    Object.entries(identificationMap).forEach(([palmKey, palm]) => {
+      let matchedCiriCount = 0;
+      const totalCiriCount = Object.keys(palm.ciri).length;
+  
+      Object.entries(palm.ciri).forEach(([ciriKey]) => {
+        if (currentAnswers[ciriKey]) {
+          matchedCiriCount++;
+        }
+      });
+  
+      const percentage = (matchedCiriCount / totalCiriCount) * 100;
+  
+      if (percentage > 0) {
+        scores[palmKey] = {
+          nama: palm.nama,
+          percentage: percentage,
+          palmDetail: palm.palmDetail,
+        };
       }
-      totalWeight += weight;
     });
-
-    scores[palmKey] = {
-      nama: palm.nama,
-      percentage: (score / totalWeight) * 100,
-      palmDetail: palm.palmDetail,
-    };
-  });
-
-  return Object.values(scores)
-    .filter((result) => result.percentage > 0)
-    .sort((a, b) => b.percentage - a.percentage);
-};
+  
+    return Object.values(scores).sort((a, b) => b.percentage - a.percentage);
+  };
+  
+  
 
   const handleAnswer = (answer: "yes" | "no" | "unsure") => {
-    const currentKey = questionKeys[currentQuestionIndex];
-    
-    // Jika jawaban adalah "Tidak Yakin", jangan ubah answers
-    const newAnswers = answer === "unsure" 
-      ? { ...answers } 
-      : { ...answers, [currentKey]: answer === "yes" };
-      
+    const newAnswers = { ...answers };
+    if (answer !== "unsure") {
+      newAnswers[currentQuestionKey] = answer === "yes";
+    }
+
     setAnswers(newAnswers);
-  
+
     const match = checkExactMatch(newAnswers);
     if (match) {
       setExactMatch(match);
       setIsFinished(true);
       return;
     }
-  
-    if (currentQuestionIndex >= questionKeys.length - 1) {
+
+    const nextKey = getNextQuestion(currentQuestionKey, answer === "yes");
+    if (nextKey) {
+      setCurrentQuestionKey(nextKey);
+    } else {
       const calculatedResults = calculateResults(newAnswers);
       setResults(calculatedResults.length > 0 ? calculatedResults : null);
       setIsFinished(true);
-    } else {
-      setCurrentQuestionIndex((prev) => prev + 1);
     }
   };
-  
 
-  const progress = (currentQuestionIndex / questionKeys.length) * 100;
+  const totalQuestions = Object.keys(ciriQuestions).length;
+  const answeredQuestions = Object.keys(answers).length;
+  const progress = (answeredQuestions / totalQuestions) * 100;
 
   return (
-    <div className="flex items-center justify-center bg-green-50 min-h-screen ">
+    <div className="flex items-center justify-center bg-green-50 min-h-screen">
       <Card className="w-full max-w-2xl mx-auto bg-[#FBF6E9]">
         <CardHeader>
           <Palmtree size={48} className="mr-4 text-green-700" />
@@ -143,14 +106,10 @@ const calculateResults = (currentAnswers: Answers): Result[] => {
           {!isFinished ? (
             <div className="space-y-6">
               <div className="text-lg font-medium text-center">
-                {ciriQuestions[questionKeys[currentQuestionIndex]]}
+                {ciriQuestions[currentQuestionKey]}
               </div>
-
               <div className="flex justify-center gap-4">
-                <Button
-                  onClick={() => handleAnswer("yes")}
-                  className="flex items-center gap-2"
-                >
+                <Button onClick={() => handleAnswer("yes")} className="flex items-center gap-2">
                   <CheckCircle className="w-4 h-4" />
                   Ya
                 </Button>
@@ -164,12 +123,18 @@ const calculateResults = (currentAnswers: Answers): Result[] => {
                 </Button>
                 <Button
                   onClick={() => handleAnswer("unsure")}
-                  variant="secondary"
+                  variant="outline"
                   className="flex items-center gap-2"
                 >
                   <HelpCircle className="w-4 h-4" />
                   Tidak Yakin
                 </Button>
+              </div>
+              <div className="mt-8 space-y-2">
+                <Progress value={progress} />
+                <div className="text-center text-sm text-gray-500">
+                  Progress: {Math.round(progress)}%
+                </div>
               </div>
             </div>
           ) : exactMatch ? (
@@ -193,15 +158,6 @@ const calculateResults = (currentAnswers: Answers): Result[] => {
           ) : (
             <div className="text-center text-red-500 text-lg font-semibold">
               Tidak ada Ciri-Ciri yang Cocok
-            </div>
-          )}
-
-          {!isFinished && (
-            <div className="mt-8 space-y-2">
-              <Progress value={progress} />
-              <div className="text-center text-sm text-gray-500">
-                Progress: {Math.round(progress)}%
-              </div>
             </div>
           )}
         </CardContent>
