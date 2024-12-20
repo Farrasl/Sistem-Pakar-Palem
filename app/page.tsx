@@ -61,8 +61,18 @@ const PalmIdentification = () => {
   
     return Object.values(scores).sort((a, b) => b.percentage - a.percentage);
   };
-  
-  
+
+  // New function to calculate the progress for the current palm type
+  const calculatePalmProgress = (currentAnswers: Answers, palmData: PalmData | null): number => {
+    if (!palmData) return 0;
+
+    const totalCiri = Object.keys(palmData.ciri).length;
+    const matchedCiri = Object.keys(palmData.ciri).filter(
+      (key) => currentAnswers[key] === true
+    ).length;
+
+    return (matchedCiri / totalCiri) * 100;
+  };
 
   const handleAnswer = (answer: "yes" | "no" | "unsure") => {
     const newAnswers = { ...answers };
@@ -92,6 +102,9 @@ const PalmIdentification = () => {
   const totalQuestions = Object.keys(ciriQuestions).length;
   const answeredQuestions = Object.keys(answers).length;
   const progress = (answeredQuestions / totalQuestions) * 100;
+
+  // Calculate palm progress based on current exact match
+  const palmProgress = exactMatch ? calculatePalmProgress(answers, exactMatch) : progress;
 
   return (
     <div className="flex items-center justify-center bg-green-50 min-h-screen">
@@ -131,9 +144,9 @@ const PalmIdentification = () => {
                 </Button>
               </div>
               <div className="mt-8 space-y-2">
-                <Progress value={progress} />
+                <Progress value={palmProgress} />
                 <div className="text-center text-sm text-gray-500">
-                  Progress: {Math.round(progress)}%
+                  Progress: {Math.round(palmProgress)}%
                 </div>
               </div>
             </div>

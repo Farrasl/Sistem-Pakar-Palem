@@ -7,35 +7,36 @@ const getNextQuestion = (currentKey: string, answer: boolean): string | null => 
       // B1 -> Ya path
       B2: { yes: "B3", no: "B17" },
       B3: { yes: "B4", no: "B7" },
-      B4: { yes: "B5", no: "B8" },
-      B5: { yes: "B6", no: "B9" },
-      B6: { yes: null, no: "B10" }, // Yes leads to Palem Raja
-      B7: { yes: "B18", no: null },
-      B8: { yes: "B19", no: null },
-      B9: { yes: "B20", no: null },
+      B4: { yes: "B5", no: "B7" },
+      B5: { yes: "B6", no: "B7" },
+      B6: { yes: null, no: "B7" }, // Yes leads to Palem Raja
+      B7: { yes: "B8", no: null },
+      B8: { yes: "B9", no: null },
+      B9: { yes: "B10", no: null },
       B10: { yes: null, no: null }, // Leads to Palem Kelapa
       
       // B17 branch (from B2 No)
-      B17: { yes: "B22", no: "B38" },
-      B18: { yes: "B23", no: null },
-      B19: { yes: "B20", no: null },
-      B20: { yes: "B21", no: null },
-      B21: { yes: null, no: null }, // Leads to Palem Kipas
-      B22: { yes: null, no: null },
-      B23: { yes: "B24", no: null },
-      B24: { yes: "B25", no: null },
-      B25: { yes: "B26", no: null },
-      B26: { yes: null, no: null }, // Leads to Palem Ekor Tupai
+      B17: { yes: "B18", no: "B22" },
+      B18: { yes: "B19", no: "B22" },
+      B19: { yes: "B20", no: "B22" },
+      B20: { yes: "B21", no: "B22" },
+      B21: { yes: null, no: "B22" }, // Leads to Palem Kipas
+      B22: { yes: "B23", no: "B38" },
+      B23: { yes: "B24", no: "B38" },
+      B24: { yes: "B25", no: "B38" },
+      B25: { yes: "B26", no: "B38" },
+      B26: { yes: null, no: "B38" }, // Leads to Palem Ekor Tupai
       
       // B1 -> Tidak -> B11 path
-      B11: { yes: "B12", no: "B28" },
+      B11: { yes: "B12", no: "B27" },
       B12: { yes: "B13", no: "B33" },
-      B13: { yes: "B14", no: "B34" },
-      B14: { yes: "B15", no: "B35" },
-      B15: { yes: "B16", no: "B36" },
-      B16: { yes: null, no: "B37" }, // Yes leads to Palem Merah
+      B13: { yes: "B14", no: "B33" },
+      B14: { yes: "B15", no: "B33" },
+      B15: { yes: "B16", no: "B33" },
+      B16: { yes: null, no: "B33" }, // Yes leads to Palem Merah
       
       // B28 branch (from B11 No)
+      B27: { yes: "B28", no: null },
       B28: { yes: "B29", no: null },
       B29: { yes: "B30", no: null },
       B30: { yes: "B31", no: null },
@@ -44,10 +45,10 @@ const getNextQuestion = (currentKey: string, answer: boolean): string | null => 
       
       // B33 branch (from B12 No)
       B33: { yes: "B34", no: "B43" },
-      B34: { yes: "B35", no: "B44" },
-      B35: { yes: "B36", no: "B45" },
-      B36: { yes: "B37", no: "B46" },
-      B37: { yes: null, no: "B47" }, // Yes leads to Palem Kuning
+      B34: { yes: "B35", no: "B43" },
+      B35: { yes: "B36", no: "B43" },
+      B36: { yes: "B37", no: "B43" },
+      B37: { yes: null, no: "B43" }, // Yes leads to Palem Kuning
       
       // B38 branch (from B17 No)
       B38: { yes: "B39", no: null },
@@ -58,10 +59,10 @@ const getNextQuestion = (currentKey: string, answer: boolean): string | null => 
       
       // B43 branch (from B33 No)
       B43: { yes: "B44", no: "B48" },
-      B44: { yes: "B45", no: "B49" },
-      B45: { yes: "B46", no: "B50" },
-      B46: { yes: "B47", no: "B51" },
-      B47: { yes: null, no: "B52" }, // Yes leads to Palem Jepang
+      B44: { yes: "B45", no: "B48" },
+      B45: { yes: "B46", no: "B48" },
+      B46: { yes: "B47", no: "B48" },
+      B47: { yes: null, no: "B48" }, // Yes leads to Palem Jepang
       
       // B48 branch (from B43 No)
       B48: { yes: "B49", no: null },
